@@ -120,8 +120,15 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
     }
     
     private void makeModelHighlights(String text) {
+        Matcher stubMatcher = stubPattern.matcher(text);
+        
         if (wholeFilePattern.matcher(text).find()) {
             highlights.addHighlight(0, doc.getLength(), modelCodeAttrs);
+            
+            while (stubMatcher.find()) {
+                highlights.addHighlight(stubMatcher.start(), stubMatcher.end(), incorrectStubAttrs);
+            }
+            
             fireHighlightsChange(0, doc.getLength());
             return;
         }
@@ -130,7 +137,6 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
         int start = -1;
         
         Matcher modelMatcher = beginEndModelPattern.matcher(text);
-        Matcher stubMatcher = stubPattern.matcher(text);
         
         while (modelMatcher.find()) {
             if (modelMatcher.group(1) != null) { // "BEGIN MODEL"
