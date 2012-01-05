@@ -1,8 +1,6 @@
 package fi.helsinki.cs.tmc.author.highlight;
 
 import java.awt.Color;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.event.DocumentEvent;
@@ -21,21 +19,38 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
 
     private Document doc;
     private OffsetsBag highlights;
-    private AttributeSet attrs;
+    private AttributeSet modelCodeAttrs;
+    private AttributeSet stubCommentAttrs;
+    private AttributeSet stubCodeAttrs;
 
     ModelAnswerHighlightsContainer(Document doc) {
         this.doc = doc;
         this.highlights = new OffsetsBag(doc);
         
-        this.attrs = makeNormalTextAttrs();
+        this.modelCodeAttrs = makeModelCodeAttrs();
+        this.stubCommentAttrs = makeStubCommentAttrs();
+        this.stubCodeAttrs = makeStubCodeAttrs();
         remakeHighlights();
         
         doc.addDocumentListener(docListener);
     }
 
-    private static AttributeSet makeNormalTextAttrs() {
+    private static AttributeSet makeModelCodeAttrs() {
         SimpleAttributeSet attrs = new SimpleAttributeSet();
         StyleConstants.setBackground(attrs, Color.ORANGE);
+        return attrs;
+    }
+    
+    private static AttributeSet makeStubCommentAttrs() {
+        SimpleAttributeSet attrs = new SimpleAttributeSet();
+        StyleConstants.setBackground(attrs, new Color(0x7D1DF1));
+        return attrs;
+    }
+    
+    private static AttributeSet makeStubCodeAttrs() {
+        SimpleAttributeSet attrs = new SimpleAttributeSet();
+        StyleConstants.setBackground(attrs, new Color(0xA65DFF));
+        StyleConstants.setForeground(attrs, Color.BLACK);
         return attrs;
     }
 
@@ -60,30 +75,50 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
         return highlights.getHighlights(startOffset, endOffset);
     }
 
-    private static final Pattern beginEndPattern = Pattern.compile("(^.*//\\s*BEGIN\\s+MODEL.*$)|(^.*//\\s*END\\s+MODEL.*\n)", Pattern.MULTILINE);
-    private static final Pattern wholeFilePattern = Pattern.compile("//\\s*MODEL FILE");
-
     private void remakeHighlights() {
         removeAllHighlights();
         
-        int depth = 0;
-        int start = -1;
-        
-        String text;
-        try {
-            text = doc.getText(0, doc.getLength());
-        } catch (BadLocationException ex) {
-            Logger.getLogger(ModelAnswerHighlightsContainer.class.getName()).log(Level.WARNING, null, ex);
-            return;
+        String text = documentText();
+        makeStubHighlights(text);
+        makeModelHighlights(text);
+    }
+
+    private void removeAllHighlights() {
+        HighlightsContainer oldHighlights = highlights;
+        highlights = new OffsetsBag(doc);
+        HighlightsSequence seq = oldHighlights.getHighlights(0, doc.getLength());
+        while (seq.moveNext()) {
+            fireHighlightsChange(seq.getStartOffset(), seq.getEndOffset());
         }
-        
+    }
+    
+    private static final Pattern stubPattern = Pattern.compile("^.*//[ \t]*STUB:[ \t]*(.*)$", Pattern.MULTILINE);
+    private static final Pattern beginEndModelPattern = Pattern.compile("(^.*//[ \t]*BEGIN[ \t]+MODEL.*$)|(^.*//[ \t]*END[ \t]+MODEL.*\n)", Pattern.MULTILINE);
+    private static final Pattern wholeFilePattern = Pattern.compile("//[ \t]*MODEL FILE");
+    
+    private void makeStubHighlights(String text) {
+        Matcher matcher = stubPattern.matcher(text);
+        while (matcher.find()) {
+            int start = matcher.start();
+            int contentStart = matcher.start(1);
+            int end = matcher.end();
+            
+            highlights.addHighlight(start, contentStart, stubCommentAttrs);
+            highlights.addHighlight(contentStart, end, stubCodeAttrs);
+        }
+    }
+    
+    private void makeModelHighlights(String text) {
         if (wholeFilePattern.matcher(text).find()) {
-            highlights.addHighlight(0, doc.getLength(), attrs);
+            highlights.addHighlight(0, doc.getLength(), modelCodeAttrs);
             fireHighlightsChange(0, doc.getLength());
             return;
         }
         
-        Matcher matcher = beginEndPattern.matcher(text);
+        int depth = 0;
+        int start = -1;
+        
+        Matcher matcher = beginEndModelPattern.matcher(text);
         while (matcher.find()) {
             if (matcher.group(1) != null) { // "BEGIN MODEL"
                 depth += 1;
@@ -95,7 +130,7 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
                 if (depth == 0 && start > -1) {
                     int end = matcher.end();
                     
-                    highlights.addHighlight(start, end, attrs);
+                    highlights.addHighlight(start, end, modelCodeAttrs);
                     
                     fireHighlightsChange(start, end);
                     start = -1;
@@ -103,13 +138,12 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
             }
         }
     }
-
-    private void removeAllHighlights() {
-        HighlightsContainer oldHighlights = highlights;
-        highlights = new OffsetsBag(doc);
-        HighlightsSequence seq = oldHighlights.getHighlights(0, doc.getLength());
-        while (seq.moveNext()) {
-            fireHighlightsChange(seq.getStartOffset(), seq.getEndOffset());
+    
+    private String documentText() throws RuntimeException {
+        try {
+            return doc.getText(0, doc.getLength());
+        } catch (BadLocationException ex) {
+            throw new RuntimeException(ex);
         }
     }
 }
