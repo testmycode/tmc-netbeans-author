@@ -10,6 +10,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import org.netbeans.api.editor.settings.EditorStyleConstants;
 import org.netbeans.spi.editor.highlighting.HighlightsContainer;
 import org.netbeans.spi.editor.highlighting.HighlightsSequence;
 import org.netbeans.spi.editor.highlighting.support.AbstractHighlightsContainer;
@@ -22,6 +23,7 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
     private AttributeSet modelCodeAttrs;
     private AttributeSet stubCommentAttrs;
     private AttributeSet stubCodeAttrs;
+    private AttributeSet incorrectStubAttrs;
 
     ModelAnswerHighlightsContainer(Document doc) {
         this.doc = doc;
@@ -30,6 +32,7 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
         this.modelCodeAttrs = makeModelCodeAttrs();
         this.stubCommentAttrs = makeStubCommentAttrs();
         this.stubCodeAttrs = makeStubCodeAttrs();
+        this.incorrectStubAttrs = makeIncorrectStubAttrs();
         remakeHighlights();
         
         doc.addDocumentListener(docListener);
@@ -51,6 +54,13 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
         SimpleAttributeSet attrs = new SimpleAttributeSet();
         StyleConstants.setBackground(attrs, new Color(0xA65DFF));
         StyleConstants.setForeground(attrs, Color.BLACK);
+        return attrs;
+    }
+    
+    private static AttributeSet makeIncorrectStubAttrs() {
+        SimpleAttributeSet attrs = new SimpleAttributeSet();
+        attrs.addAttribute(EditorStyleConstants.WaveUnderlineColor, Color.RED);
+        StyleConstants.setBackground(attrs, Color.ORANGE);
         return attrs;
     }
 
@@ -118,19 +128,25 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
         int depth = 0;
         int start = -1;
         
-        Matcher matcher = beginEndModelPattern.matcher(text);
-        while (matcher.find()) {
-            if (matcher.group(1) != null) { // "BEGIN MODEL"
+        Matcher modelMatcher = beginEndModelPattern.matcher(text);
+        Matcher stubMatcher = stubPattern.matcher(text);
+        
+        while (modelMatcher.find()) {
+            if (modelMatcher.group(1) != null) { // "BEGIN MODEL"
                 depth += 1;
                 if (depth == 1) {
-                    start = matcher.start();
+                    start = modelMatcher.start();
                 }
             } else { // "END MODEL"
                 depth = Math.max(0, depth - 1);
                 if (depth == 0 && start > -1) {
-                    int end = matcher.end();
+                    int end = modelMatcher.end();
                     
                     highlights.addHighlight(start, end, modelCodeAttrs);
+                    
+                    if (stubMatcher.find(start) && stubMatcher.end() < end) {
+                        highlights.addHighlight(stubMatcher.start(), stubMatcher.end(), incorrectStubAttrs);
+                    }
                     
                     fireHighlightsChange(start, end);
                     start = -1;
