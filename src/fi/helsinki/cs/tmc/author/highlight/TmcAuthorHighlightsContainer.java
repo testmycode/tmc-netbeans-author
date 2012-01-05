@@ -16,20 +16,20 @@ import org.netbeans.spi.editor.highlighting.HighlightsSequence;
 import org.netbeans.spi.editor.highlighting.support.AbstractHighlightsContainer;
 import org.netbeans.spi.editor.highlighting.support.OffsetsBag;
 
-public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer {
+public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
 
     private Document doc;
     private OffsetsBag highlights;
-    private AttributeSet modelCodeAttrs;
+    private AttributeSet solutionCodeAttrs;
     private AttributeSet stubCommentAttrs;
     private AttributeSet stubCodeAttrs;
     private AttributeSet incorrectStubAttrs;
 
-    ModelAnswerHighlightsContainer(Document doc) {
+    TmcAuthorHighlightsContainer(Document doc) {
         this.doc = doc;
         this.highlights = new OffsetsBag(doc);
         
-        this.modelCodeAttrs = makeModelCodeAttrs();
+        this.solutionCodeAttrs = makeSolutionCodeAttrs();
         this.stubCommentAttrs = makeStubCommentAttrs();
         this.stubCodeAttrs = makeStubCodeAttrs();
         this.incorrectStubAttrs = makeIncorrectStubAttrs();
@@ -38,7 +38,7 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
         doc.addDocumentListener(docListener);
     }
 
-    private static AttributeSet makeModelCodeAttrs() {
+    private static AttributeSet makeSolutionCodeAttrs() {
         SimpleAttributeSet attrs = new SimpleAttributeSet();
         StyleConstants.setBackground(attrs, Color.ORANGE);
         return attrs;
@@ -90,7 +90,7 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
         
         String text = documentText();
         makeStubHighlights(text);
-        makeModelHighlights(text);
+        makeSolutionHighlights(text);
     }
 
     private void removeAllHighlights() {
@@ -103,8 +103,8 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
     }
     
     private static final Pattern stubPattern = Pattern.compile("^.*//[ \t]*STUB:[ \t]*(.*)$", Pattern.MULTILINE);
-    private static final Pattern beginEndModelPattern = Pattern.compile("(^.*//[ \t]*BEGIN[ \t]+MODEL.*$)|(^.*//[ \t]*END[ \t]+MODEL.*\n)", Pattern.MULTILINE);
-    private static final Pattern wholeFilePattern = Pattern.compile("//[ \t]*MODEL FILE");
+    private static final Pattern beginEndSolutionPattern = Pattern.compile("(^.*//[ \t]*BEGIN[ \t]+SOLUTION.*$)|(^.*//[ \t]*END[ \t]+SOLUTION.*\n)", Pattern.MULTILINE);
+    private static final Pattern wholeFilePattern = Pattern.compile("//[ \t]*SOLUTION FILE");
     
     private void makeStubHighlights(String text) {
         Matcher matcher = stubPattern.matcher(text);
@@ -119,11 +119,11 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
         }
     }
     
-    private void makeModelHighlights(String text) {
+    private void makeSolutionHighlights(String text) {
         Matcher stubMatcher = stubPattern.matcher(text);
         
         if (wholeFilePattern.matcher(text).find()) {
-            highlights.addHighlight(0, doc.getLength(), modelCodeAttrs);
+            highlights.addHighlight(0, doc.getLength(), solutionCodeAttrs);
             
             while (stubMatcher.find()) {
                 highlights.addHighlight(stubMatcher.start(), stubMatcher.end(), incorrectStubAttrs);
@@ -136,20 +136,20 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
         int depth = 0;
         int start = -1;
         
-        Matcher modelMatcher = beginEndModelPattern.matcher(text);
+        Matcher solutionMatcher = beginEndSolutionPattern.matcher(text);
         
-        while (modelMatcher.find()) {
-            if (modelMatcher.group(1) != null) { // "BEGIN MODEL"
+        while (solutionMatcher.find()) {
+            if (solutionMatcher.group(1) != null) { // "BEGIN SOLUTION"
                 depth += 1;
                 if (depth == 1) {
-                    start = modelMatcher.start();
+                    start = solutionMatcher.start();
                 }
-            } else { // "END MODEL"
+            } else { // "END SOLUTION"
                 depth = Math.max(0, depth - 1);
                 if (depth == 0 && start > -1) {
-                    int end = modelMatcher.end();
+                    int end = solutionMatcher.end();
                     
-                    highlights.addHighlight(start, end, modelCodeAttrs);
+                    highlights.addHighlight(start, end, solutionCodeAttrs);
                     
                     if (stubMatcher.find(start) && stubMatcher.end() < end) {
                         highlights.addHighlight(stubMatcher.start(), stubMatcher.end(), incorrectStubAttrs);

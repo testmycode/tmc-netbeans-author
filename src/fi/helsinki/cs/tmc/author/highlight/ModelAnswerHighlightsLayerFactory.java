@@ -8,7 +8,7 @@ public class ModelAnswerHighlightsLayerFactory implements HighlightsLayerFactory
     @Override
     public HighlightsLayer[] createLayers(Context ctx) {
         return new HighlightsLayer[] {
-            HighlightsLayer.create("TmcModelAnswer", ZOrder.DEFAULT_RACK, true, new ModelAnswerHighlightsContainer(ctx.getDocument()))
+            HighlightsLayer.create("TmcModelAnswer", ZOrder.DEFAULT_RACK, true, new TmcAuthorHighlightsContainer(ctx.getDocument()))
         };
     }
 }
