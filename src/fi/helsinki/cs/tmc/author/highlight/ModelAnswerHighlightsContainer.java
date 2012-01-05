@@ -115,6 +115,7 @@ public class ModelAnswerHighlightsContainer extends AbstractHighlightsContainer 
             
             highlights.addHighlight(start, contentStart, stubCommentAttrs);
             highlights.addHighlight(contentStart, end, stubCodeAttrs);
+            fireHighlightsChange(start, end);
         }
     }
     
