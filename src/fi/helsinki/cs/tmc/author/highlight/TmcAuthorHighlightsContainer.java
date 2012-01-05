@@ -133,31 +133,24 @@ public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
             return;
         }
         
-        int depth = 0;
         int start = -1;
         
         Matcher solutionMatcher = beginEndSolutionPattern.matcher(text);
         
         while (solutionMatcher.find()) {
-            if (solutionMatcher.group(1) != null) { // "BEGIN SOLUTION"
-                depth += 1;
-                if (depth == 1) {
-                    start = solutionMatcher.start();
+            if (start == -1 && solutionMatcher.group(1) != null) { // "BEGIN SOLUTION"
+                start = solutionMatcher.start();
+            } else if (start > -1 && solutionMatcher.group(2) != null) { // "END SOLUTION"
+                int end = solutionMatcher.end();
+
+                highlights.addHighlight(start, end, solutionCodeAttrs);
+
+                if (stubMatcher.find(start) && stubMatcher.end() < end) {
+                    highlights.addHighlight(stubMatcher.start(), stubMatcher.end(), incorrectStubAttrs);
                 }
-            } else { // "END SOLUTION"
-                depth = Math.max(0, depth - 1);
-                if (depth == 0 && start > -1) {
-                    int end = solutionMatcher.end();
-                    
-                    highlights.addHighlight(start, end, solutionCodeAttrs);
-                    
-                    if (stubMatcher.find(start) && stubMatcher.end() < end) {
-                        highlights.addHighlight(stubMatcher.start(), stubMatcher.end(), incorrectStubAttrs);
-                    }
-                    
-                    fireHighlightsChange(start, end);
-                    start = -1;
-                }
+
+                fireHighlightsChange(start, end);
+                start = -1;
             }
         }
     }
