@@ -2,5 +2,5 @@ Manifest-Version: 1.0
 OpenIDE-Module: fi.helsinki.cs.tmc.author
 OpenIDE-Module-Layer: fi/helsinki/cs/tmc/author/layer.xml
 OpenIDE-Module-Localizing-Bundle: fi/helsinki/cs/tmc/author/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
+OpenIDE-Module-Specification-Version: 0.1.0
 
