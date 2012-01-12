@@ -104,7 +104,7 @@ public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
     
     private static final Pattern stubPattern = Pattern.compile("^[ \t]*//[ \t]*STUB:[ \t]*(.*)$", Pattern.MULTILINE);
     private static final Pattern beginEndSolutionPattern = Pattern.compile("(^[ \t]*//[ \t]*BEGIN[ \t]+SOLUTION[ \t]*$)|(^[ \t]*//[ \t]*END[ \t]+SOLUTION[ \t]*\n)", Pattern.MULTILINE);
-    private static final Pattern wholeFilePattern = Pattern.compile("^[ \t]*//[ \t]*SOLUTION[ \t]+FILE[ \t]*$");
+    private static final Pattern wholeFilePattern = Pattern.compile("^[ \t]*//[ \t]*SOLUTION[ \t]+FILE[ \t]*$", Pattern.MULTILINE);
     
     private void makeStubHighlights(String text) {
         Matcher matcher = stubPattern.matcher(text);
