@@ -24,6 +24,8 @@ public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
     private AttributeSet stubCommentAttrs;
     private AttributeSet stubCodeAttrs;
     private AttributeSet incorrectStubAttrs;
+    private AttributeSet htmlAttrs;
+    private AttributeSet incorrectHtmlAttrs;
 
     TmcAuthorHighlightsContainer(Document doc) {
         this.doc = doc;
@@ -33,6 +35,8 @@ public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
         this.stubCommentAttrs = makeStubCommentAttrs();
         this.stubCodeAttrs = makeStubCodeAttrs();
         this.incorrectStubAttrs = makeIncorrectStubAttrs();
+        this.htmlAttrs = makeHtmlAttrs();
+        this.incorrectHtmlAttrs = makeIncorrectHtmlAttrs();
         remakeHighlights();
         
         doc.addDocumentListener(docListener);
@@ -63,6 +67,19 @@ public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
         StyleConstants.setBackground(attrs, Color.ORANGE);
         return attrs;
     }
+    
+    private static AttributeSet makeHtmlAttrs() {
+        SimpleAttributeSet attrs = new SimpleAttributeSet();
+        StyleConstants.setBackground(attrs, new Color(0xE6FFEB));
+        return attrs;
+    }
+    
+    private static AttributeSet makeIncorrectHtmlAttrs() {
+        SimpleAttributeSet attrs = new SimpleAttributeSet();
+        attrs.addAttribute(EditorStyleConstants.WaveUnderlineColor, Color.RED);
+        StyleConstants.setBackground(attrs, new Color(0xE6FFEB));
+        return attrs;
+    }
 
     private DocumentListener docListener = new DocumentListener() {
         @Override
@@ -91,6 +108,7 @@ public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
         String text = documentText();
         makeStubHighlights(text);
         makeSolutionHighlights(text);
+        makeHtmlHighlights(text);
     }
 
     private void removeAllHighlights() {
@@ -103,8 +121,9 @@ public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
     }
     
     private static final Pattern stubPattern = Pattern.compile("^[ \t]*//[ \t]*STUB:[ \t]*(.*)$", Pattern.MULTILINE);
-    private static final Pattern beginEndSolutionPattern = Pattern.compile("(^[ \t]*//[ \t]*BEGIN[ \t]+SOLUTION[ \t]*$)|(^[ \t]*//[ \t]*END[ \t]+SOLUTION[ \t]*\n)", Pattern.MULTILINE);
+    private static final Pattern beginEndSolutionPattern = Pattern.compile("(^[ \t]*//[ \t]*BEGIN[ \t]+SOLUTION[ \t]*$)|(^[ \t]*//[ \t]*END[ \t]+SOLUTION[ \t]*\r?\n)", Pattern.MULTILINE);
     private static final Pattern wholeFilePattern = Pattern.compile("^[ \t]*//[ \t]*SOLUTION[ \t]+FILE[ \t]*$", Pattern.MULTILINE);
+    private static final Pattern htmlPattern = Pattern.compile("^[ \t]*/\\*[ \t*\r\n]*PREPEND[ \t]+HTML[ \t]*((?:[*][^/]|[^*])*)\\*/[ \t]*$", Pattern.MULTILINE);
     
     private void makeStubHighlights(String text) {
         Matcher matcher = stubPattern.matcher(text);
@@ -152,6 +171,21 @@ public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
                 fireHighlightsChange(start, end);
                 start = -1;
             }
+        }
+    }
+    
+    private void makeHtmlHighlights(String text) {
+        boolean first = true;
+        Matcher matcher = htmlPattern.matcher(text);
+        while (matcher.find()) {
+            int start = matcher.start();
+            int end = matcher.end();
+            
+            AttributeSet attrs = (first ? htmlAttrs : incorrectHtmlAttrs);
+            highlights.addHighlight(start, end, attrs);
+            fireHighlightsChange(start, end);
+            
+            first = false;
         }
     }
     
