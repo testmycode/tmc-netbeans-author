@@ -18,6 +18,8 @@ import org.netbeans.spi.editor.highlighting.support.OffsetsBag;
 
 public class TmcAuthorHighlightsContainer extends AbstractHighlightsContainer {
 
+    //TODO: support XML files too. Needs refactoring.
+    
     private Document doc;
     private OffsetsBag highlights;
     private AttributeSet solutionCodeAttrs;
