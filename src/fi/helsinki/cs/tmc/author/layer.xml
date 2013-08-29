@@ -6,6 +6,18 @@
             <folder name="x-java">
                 <file name="fi-helsinki-cs-tmc-author-highlight-ModelAnswerHighlightsLayerFactory.instance"/>
             </folder>
+            <folder name="x-c">
+                <file name="fi-helsinki-cs-tmc-author-highlight-ModelAnswerHighlightsLayerFactory.instance"/>
+            </folder>
+            <folder name="x-c++">
+                <file name="fi-helsinki-cs-tmc-author-highlight-ModelAnswerHighlightsLayerFactory.instance"/>
+            </folder>
+            <folder name="x-h">
+                <file name="fi-helsinki-cs-tmc-author-highlight-ModelAnswerHighlightsLayerFactory.instance"/>
+            </folder>
+            <folder name="javascript">
+                <file name="fi-helsinki-cs-tmc-author-highlight-ModelAnswerHighlightsLayerFactory.instance"/>
+            </folder>
         </folder>
     </folder>
     <folder name="Services">
